@@ -1,3 +1,4 @@
+create table pol_kostka as
 select `year`, `month`, `day`, `hour`, liczba from (
 select `year`, `month`, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`, `day`, `hour`
 union
@@ -1106,7 +1107,12 @@ case when `hour` = -1 then 10000 else `hour`end;
 | -1    | -1    | -1  | -1   | 22845650  |
 +-------+-------+-----+------+-----------+
 1,058 rows selected (1796.412 seconds)
-
++-----------+----------------------------+
+| Fragment  | Number of records written  |
++-----------+----------------------------+
+| 0_0       | 1058                       |
++-----------+----------------------------+
+1 row selected (1773.775 seconds)
 
 
 
@@ -1352,4 +1358,41 @@ https://drill.apache.org/docs/explain/
 | 1_1       | 3                          |
 +-----------+----------------------------+
 6 rows selected (1018.242 seconds)
+0: jdbc:drill:zk=local> create table kostka_15 as select  -1, -1, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `hour`;
++-----------+----------------------------+
+| Fragment  | Number of records written  |
++-----------+----------------------------+
+| 1_4       | 4                          |
+| 1_1       | 2                          |
+| 1_0       | 5                          |
+| 1_5       | 5                          |
+| 1_3       | 4                          |
+| 1_2       | 4                          |
++-----------+----------------------------+
+6 rows selected (1044.355 seconds)
+0: jdbc:drill:zk=local>
+0: jdbc:drill:zk=local> create table kostka_16 as select  -1, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets;
++-----------+----------------------------+
+| Fragment  | Number of records written  |
++-----------+----------------------------+
+| 0_0       | 1                          |
++-----------+----------------------------+
+1 row selected (0.415 seconds)
 
+create table kostka as 
+select `year`, `month`, `day`, `hour`, liczba from kostka_1
+union select `year`, `month`, `day`, `hour`, liczba from kostka_2
+union select `year`, `month`, `day`, `hour`, liczba from kostka_3
+union select `year`, `month`, `day`, `hour`, liczba from kostka_4
+union select `year`, `month`, `day`, `hour`, liczba from kostka_5
+union select `year`, `month`, `day`, `hour`, liczba from kostka_6
+union select `year`, `month`, `day`, `hour`, liczba from kostka_7
+union select `year`, `month`, `day`, `hour`, liczba from kostka_8
+union select `year`, `month`, `day`, `hour`, liczba from kostka_9
+union select `year`, `month`, `day`, `hour`, liczba from kostka_10
+union select `year`, `month`, `day`, `hour`, liczba from kostka_11
+union select `year`, `month`, `day`, `hour`, liczba from kostka_12
+union select `year`, `month`, `day`, `hour`, liczba from kostka_13
+union select `year`, `month`, `day`, `hour`, liczba from kostka_14
+union select `year`, `month`, `day`, `hour`, liczba from kostka_15
+union select `year`, `month`, `day`, `hour`, liczba from kostka_16;
