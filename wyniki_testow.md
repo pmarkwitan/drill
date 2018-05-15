@@ -182,6 +182,7 @@ Mongo     39.404    39.455    38.761    38.063    40.665    40.969    40.227    
 Apache Drill nie wspiera zapytań ROLLUP i CUBE
 ```
 Drill: 
+create table pol_kostka as
 select `year`, `month`, `day`, `hour`, liczba from (
 select `year`, `month`, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`, `day`, `hour`
 union
@@ -189,14 +190,18 @@ select `year`, `month`, `day`, -1, count(1) as liczba from mongo.tweets2.tweets 
 union
 select `year`, `month`, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`
 union
-select `year`, -1, -1, -1, count(1) as liczba from mongo.tweet2s.tweets group by `year`
+select `year`, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`
 union
-select -1, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets)
-order by case when `year` = -1 then 10000 else `year`end,
-case when `month` = -1 then 10000 else `month`end,
-case when `day` = -1 then 10000 else `day`end, 
-case when `hour` = -1 then 10000 else `hour`end;
+select -1, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets);
 ```
+1,058 rows selected (1796.412 seconds)
++-----------+----------------------------+
+| Fragment  | Number of records written  |
++-----------+----------------------------+
+| 0_0       | 1058                       |
++-----------+----------------------------+
+1 row selected (1773.775 seconds)
+
 
 ##6. Kostka "CUBE"
 Apache Drill nie wspiera zapytań ROLLUP i CUBE
@@ -211,17 +216,58 @@ union select `year`, -1, `day`, `hour`, count(1) as liczba from mongo.tweets2.tw
 union select `year`, -1, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`, `day`
 union select `year`, -1, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `hour`
 union select `year`, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`
-union select  -1, `month`, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `month`, `day`, `hour`
-union select  -1, `month`, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `month`, `day`
-union select  -1, `month`, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `month`, `hour`
-union select  -1, `month`, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `month`
-union select  -1, -1, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `day`, `hour`
-union select  -1, -1, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `day`
-union select  -1, -1, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `hour`
-union select  -1, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets
+union select -1, `month`, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `month`, `day`, `hour`
+union select -1, `month`, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `month`, `day`
+union select -1, `month`, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `month`, `hour`
+union select -1, `month`, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `month`
+union select -1, -1, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `day`, `hour`
+union select -1, -1, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `day`
+union select -1, -1, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `hour`
+union select -1, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets
 )
 order by case when `year` = -1 then 10000 else `year`end,
 case when `month` = -1 then 10000 else `month`end,
 case when `day` = -1 then 10000 else `day`end, 
 case when `hour` = -1 then 10000 else `hour`end;
+```
+
+Powyższe zapytanie nie wykonało się w czasie 2 godzin i połączenie z serwerem zostało zamknięte.
+Zmaterializowano kostkę:
+```
+use dfs.tmp;
+
+create table kostka_1 as select `year`, `month`, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`, `day`, `hour`;
+create table kostka_2 as select `year`, `month`, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`, `day`;
+create table kostka_3 as select `year`, `month`, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`, `hour`;
+create table kostka_4 as select `year`, `month`, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`, `month`;
+create table kostka_5 as select `year`, -1, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `day`, `hour`;
+create table kostka_6 as select `year`, -1, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`, `day`;
+create table kostka_7 as select `year`, -1, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `year`, `hour`;
+create table kostka_8 as select `year`, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `year`;
+create table kostka_9 as select -1, `month`, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `month`, `day`, `hour`;
+create table kostka_10 as select -1, `month`, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `month`, `day`;
+create table kostka_11 as select -1, `month`, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `month`, `hour`;
+create table kostka_12 as select -1, `month`, -1, -1, count(1) as liczba from mongo.tweets2.tweets group by `month`;
+create table kostka_13 as select -1, -1, `day`, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `day`, `hour`;
+create table kostka_14 as select -1, -1, `day`, -1, count(1) as liczba from mongo.tweets2.tweets group by `day`;
+create table kostka_15 as select -1, -1, -1, `hour`, count(1) as liczba from mongo.tweets2.tweets group by `hour`;
+create table kostka_16 as select -1, -1, -1, -1, count(1) as liczba from mongo.tweets2.tweets;
+
+create table kostka as 
+select `year`, `month`, `day`, `hour`, liczba from kostka_1
+union select `year`, `month`, `day`, `hour`, liczba from kostka_2
+union select `year`, `month`, `day`, `hour`, liczba from kostka_3
+union select `year`, `month`, `day`, `hour`, liczba from kostka_4
+union select `year`, `month`, `day`, `hour`, liczba from kostka_5
+union select `year`, `month`, `day`, `hour`, liczba from kostka_6
+union select `year`, `month`, `day`, `hour`, liczba from kostka_7
+union select `year`, `month`, `day`, `hour`, liczba from kostka_8
+union select `year`, `month`, `day`, `hour`, liczba from kostka_9
+union select `year`, `month`, `day`, `hour`, liczba from kostka_10
+union select `year`, `month`, `day`, `hour`, liczba from kostka_11
+union select `year`, `month`, `day`, `hour`, liczba from kostka_12
+union select `year`, `month`, `day`, `hour`, liczba from kostka_13
+union select `year`, `month`, `day`, `hour`, liczba from kostka_14
+union select `year`, `month`, `day`, `hour`, liczba from kostka_15
+union select `year`, `month`, `day`, `hour`, liczba from kostka_16;
 ```
